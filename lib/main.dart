@@ -11,26 +11,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Passerby',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.green,
       ),
-      home: const MyHomePage(title: 'Passerby'),
+      home: const LoginPage(title: 'Passerby'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key, required this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -44,72 +35,207 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+enum FormType { login, register }
 
-  void _incrementCounter() {
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailFilter = TextEditingController();
+  final TextEditingController _passwordFilter = TextEditingController();
+  String _email = "";
+  String _password = "";
+  FormType _form = FormType.login;
+
+  _LoginPageState() {
+    _emailFilter.addListener(_emailListen);
+    _passwordFilter.addListener(_passwordListen);
+  }
+
+  void _emailListen() {
+    if (_emailFilter.text.isEmpty) {
+      _email = "";
+    } else {
+      _email = _emailFilter.text;
+    }
+  }
+
+  void _passwordListen() {
+    if (_passwordFilter.text.isEmpty) {
+      _password = "";
+    } else {
+      _password = _passwordFilter.text;
+    }
+  }
+
+  void _formChange() async {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      if (_form == FormType.register) {
+        _form = FormType.login;
+      } else {
+        _form = FormType.register;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            _buildTextFields(),
+            _buildButtons(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextFields() {
+    return Column(
+      children: <Widget>[
+        TextField(
+          controller: _emailFilter,
+          decoration: const InputDecoration(labelText: 'Email'),
+        ),
+        TextField(
+          controller: _passwordFilter,
+          decoration: const InputDecoration(labelText: 'Password'),
+          obscureText: true,
+        )
+      ],
+    );
+  }
+
+  Widget _buildButtons() {
+    if (_form == FormType.login) {
+      return Column(
+        children: <Widget>[
+          RaisedButton(
+            child: const Text('Login'),
+            onPressed: _loginPressed,
+          ),
+          FlatButton(
+            child: const Text('Dont have an account? Tap here to register.'),
+            onPressed: _formChange,
+          ),
+          FlatButton(
+            child: const Text('Forgot Password?'),
+            onPressed: _passwordReset,
+          )
+        ],
+      );
+    } else {
+      return Column(
+        children: <Widget>[
+          RaisedButton(
+            child: const Text('Next'),
+            onPressed: _nextPressed,
+          ),
+          FlatButton(
+            child: const Text('Have an account? Click here to login.'),
+            onPressed: _formChange,
+          )
+        ],
+      );
+    }
+  }
+
+  void _loginPressed() {
+    print('The user wants to login with $_email and $_password');
+  }
+
+  void _nextPressed() {
+    print('The user wants to create an accoutn with $_email and $_password');
+    print('add user to db');
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ActivitySelectionPage(
+            email: _email,
+          ),
+        ));
+  }
+
+  void _passwordReset() {
+    print("The user wants a password reset request sent to $_email");
+  }
+}
+
+class ActivitySelectionPage extends StatefulWidget {
+  final String email;
+
+  const ActivitySelectionPage({Key? key, required this.email})
+      : super(key: key);
+  @override
+  State<ActivitySelectionPage> createState() => _ActivitySelectionPage();
+}
+
+class _ActivitySelectionPage extends State<ActivitySelectionPage> {
+  Map<String, bool> activities = {
+    'Spikeball': false,
+    'Hiking': false,
+    'Yoga': false,
+    'Biking': false,
+    'Reading': false
+  };
+
+  void _submitPressed(activities, email) {
+    print('Add activites to db');
+    print(email);
+    print(activities);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Activities"),
+      ),
+      body: Center(
+        child: Column(
+          children: <Widget>[
+            _buildActivityButtons(),
+            ElevatedButton(
+              onPressed: () {
+                _submitPressed(activities, widget.email);
+              },
+              style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Colors.red)),
+              child: const Text('Submit'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  Widget _buildActivityButtons() {
+    List<Widget> widgets = <Widget>[];
+    activities.forEach((k, v) => {
+          widgets.add(Padding(
+            padding: const EdgeInsets.all(20),
+            child: ElevatedButton(
+              onPressed: () => {
+                setState(() {
+                  activities[k] = !activities[k]!;
+                }),
+                print(k)
+              },
+              style: ButtonStyle(
+                  backgroundColor: activities[k]!
+                      ? MaterialStateProperty.all<Color>(Colors.blue)
+                      : MaterialStateProperty.all<Color>(Colors.green)),
+              child: Text(k),
+            ),
+          ))
+        });
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: widgets);
   }
 }
